@@ -1,0 +1,184 @@
+
+package ui.components;
+
+
+/**
+ * Kazemi Facemark example for JavaCV
+ * 
+ * @author Théophile Gonos
+ *
+ * Link to Kazemi model : 
+ * https://raw.githubusercontent.com/opencv/opencv_3rdparty/contrib_face_alignment_20170818/face_landmark_model.dat
+ */
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+
+import org.opencv.core.*;
+import org.opencv.objdetect.*;
+import org.opencv.highgui.*;
+import org.opencv.imgproc.*;
+import org.opencv.imgcodecs.*;
+import org.opencv.face.*;
+
+import org.bytedeco.javacpp.Pointer;
+
+
+
+/*
+import org.bytedeco.opencv.opencv_core.*;
+import org.bytedeco.opencv.opencv_face.*;
+import org.bytedeco.opencv.opencv_highgui.*;
+import org.bytedeco.opencv.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_objdetect.*;
+import static org.bytedeco.opencv.global.opencv_core.*;
+import static org.bytedeco.opencv.global.opencv_face.*;
+import static org.bytedeco.opencv.global.opencv_highgui.*;
+import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
+import static org.bytedeco.opencv.global.opencv_imgproc.*;
+import static org.bytedeco.opencv.global.opencv_objdetect.*;
+*/
+public class MainWindow {
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException {
+        // Load Face Detector
+        CascadeClassifier faceDetector = new CascadeClassifier ("resources/xml/haarcascade_frontalface_alt2.xml");
+ 
+        // Create an instance of Facemark
+        FacemarkKazemi facemark = FacemarkKazemi.create();
+ 
+        // Load landmark detector 
+        facemark.loadModel("resources/models/face_landmark_model.dat");
+ 
+        // Load image
+        Mat img = Imgcodecs.imread("resources/img/henry.jpg");
+        
+        // convert to grayscale and equalize histograe for better detection
+        Mat gray = new Mat ();
+        Imgproc.cvtColor(img, gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.equalizeHist( gray, gray );
+       
+        // Find faces on the image
+        RectVector faces = new RectVector ();
+        faceDetector.detectMultiScale(gray, faces);
+        
+        System.out.println ("Faces detected: "+faces.size());
+        // Variable for landmarks. 
+        // Landmarks for one face is a vector of points
+        // There can be more than one face in the image.
+        Point2fVectorVector landmarks = new Point2fVectorVector();
+
+        // Run landmark detector
+        boolean success = facemark.fit(img, faces, landmarks);
+        
+        if(success) {
+            // If successful, render the landmarks on each face
+            for (long i = 0; i < landmarks.size(); i++) {
+                Point2fVector v = landmarks.get(i);
+                drawFacemarks(img, v, Scalar.YELLOW);
+            }
+        }
+
+        // Display results 
+        HighGui.imshow("Kazemi Facial Landmark", img);
+        waitKey(0);
+        // Save results
+        Imgcodecs.imwrite ("kazemi_landmarks.jpg", img);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+import javafx.application.Application;
+
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.input.MouseEvent;
+
+public class MainWindow extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Layering Example");
+
+        // Create the first canvas with an image
+        Canvas canvas1 = new Canvas(1300, 1080);
+        GraphicsContext gc1 = canvas1.getGraphicsContext2D();
+        gc1.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+        gc1.fillRect(0, 0, 1300, 1080);
+        // Create the second canvas with another image
+        Canvas canvas2 = new Canvas(1300, 1080);
+        GraphicsContext gc2 = canvas2.getGraphicsContext2D();
+        Image image2 = new Image("resources/img/henry.jpg");
+        gc2.drawImage(image2, 0, 0, 977, 864);
+
+        Canvas canvas3 = new Canvas(977, 864);
+        GraphicsContext gc3 = canvas3.getGraphicsContext2D();
+       
+        Circle circle = new Circle(5);
+        circle.setFill(Color.TRANSPARENT);
+        circle.setStroke(Color.AQUA);
+        circle.setStrokeWidth(2);
+
+        // Enable mouse event handling for dragging
+        double[] dragDelta = new double[]{0.0, 0.0};
+
+        circle.setOnMousePressed((MouseEvent event) -> {
+            dragDelta[0] = circle.getCenterX() - event.getSceneX();
+            dragDelta[1] = circle.getCenterY() - event.getSceneY();
+        });
+
+        circle.setOnMouseDragged((MouseEvent event) -> {
+            double x = event.getSceneX() + dragDelta[0];
+            double y = event.getSceneY() + dragDelta[1];
+
+            // Update the circle's position
+            circle.setTranslateX(x);
+            circle.setTranslateY(y);
+
+
+            // Print or use the updated position as needed
+            System.out.println("Circle position: (" + x + ", " + y + ")");
+        });
+        
+        StackPane root = new StackPane();
+        root.getChildren().addAll(canvas1, canvas2,circle);
+        
+
+        // Create a scene and set it on the stage
+        Scene scene = new Scene(root);
+        primaryStage.setScene(scene);
+        
+        primaryStage.setMaximized(true);
+        // Show the stage
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+*/
